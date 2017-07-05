@@ -1,0 +1,92 @@
+library WeatherAPI;
+
+{ Author: Halil Han Badem
+  Company: Bi'Coder
+  Date: 17/06/2017 14:57
+
+    NOTE: Thank you so much, my family.}
+
+
+uses
+  System.SysUtils,
+  System.Classes,
+  IdBaseComponent,
+  IdComponent,
+  IdTCPConnection,
+  IdTCPClient,
+  IdHTTP,
+  Math,
+  WeatherClass in 'WeatherClass.pas';
+
+{$R *.res}
+
+
+type
+  TWeatherAPI = class(TInterfacedObject, WeatherAPIModule)
+ protected
+    Function API: String;
+    Function City: String;
+    Function WTemperature: String;
+    Function WForecast: String;
+end;
+
+
+
+function Parse(text, sol, sag: string): String;    /// Function Author: Ali Zairov
+begin
+  Delete(text, 1, Pos(sol, text) + Length(sol) - 1);
+  Result := Copy(text, 1, Pos(sag, text) - 1);
+end;
+
+Function TWeatherAPI.API: string;
+begin
+  /// API ID :)
+end;
+
+
+Function TWeatherAPI.City: String;
+begin
+  Result := City;
+end;
+
+Function TWeatherAPI.WTemperature;
+var
+  XML: TStringList;
+  Http: TIdHTTP;
+  Matematik: Real;
+  Kelvin: String;
+begin
+  XML := TStringList.Create;
+  Http := TIdHTTP.Create(Nil);
+  XML.Text := Http.Get('http://api.openweathermap.org/data/2.5/weather?q='+City+'&mode=xml&appid='+API);
+  Kelvin := Copy(Parse(XML.Strings[1], '<temperature value="', '"'), 0, 3);
+  Matematik := StrToInt(Kelvin) - 273;
+  Result := FloatToStr(Matematik);
+end;
+
+
+Function TWeatherAPI.WForecast;
+var
+  XML: TStringList;
+  Http: TIdHTTP;
+  HavaDurum: String;
+begin
+  XML := TStringList.Create;
+  Http := TIdHTTP.Create(Nil);
+  XML.Text := Http.Get('http://api.openweathermap.org/data/2.5/weather?q='+City+'&mode=xml&appid='+API);
+  HavaDurum := Parse(XML.Strings[1], '<weather number="', '" icon="');
+  Delete(HavaDurum, 1, 12);
+  Result := HavaDurum;
+end;
+
+
+Function WeatherApp: WeatherAPIModule; stdcall; export;
+begin
+  Result := TWeatherAPI.Create;
+end;
+
+
+Exports WeatherApp;
+
+begin
+end.
